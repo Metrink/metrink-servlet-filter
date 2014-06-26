@@ -17,6 +17,7 @@
 package com.metrink;
 
 import java.io.IOException;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
@@ -32,6 +33,14 @@ import org.slf4j.LoggerFactory;
  */
 public class MetrinkGAEFilter extends MetrinkFilterBase {
     private static final Logger LOG = LoggerFactory.getLogger(MetrinkGAEFilter.class);
+
+    @Override
+    protected CallableWorker createWorker(MetricFactory metricFactory,
+                                          Map<String, Long> serverTime,
+                                          Map<String, Long> pageCount) {
+        return new GAEWorker(metricFactory, serverTime, pageCount);
+    }
+
 
     @Override
     protected boolean beforeDoFilter(final ServletRequest request, final ServletResponse response)

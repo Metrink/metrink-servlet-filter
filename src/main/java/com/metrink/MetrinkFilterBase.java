@@ -85,13 +85,15 @@ abstract class MetrinkFilterBase implements Filter {
             throw new ServletException(e);
         }
 
-        callableWorker = new CallableWorker(metricFactory, serverTimes, pageCounts);
+        callableWorker = createWorker(metricFactory, serverTimes, pageCounts);
 
         // call our hook for any other setup
         initHook(config);
 
         LOG.info("Initialized MetrinkFilter");
     }
+
+    protected abstract CallableWorker createWorker(MetricFactory metricFactory, Map<String, Long> serverTime, Map<String, Long> pageCount);
 
     protected void initHook(final FilterConfig config) {
     }

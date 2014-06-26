@@ -88,35 +88,33 @@ class CallableWorker implements Callable<Integer> {
         }
 
         if(!metrics.isEmpty()) {
-            return sendMetrics(metrics);
+            // convert to JSON and compress
+            final String json = metricFactory.toJsonString(metrics);
+
+            LOG.debug(json);
+
+            // compress the JSON
+            final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+            try {
+                final GZIPOutputStream compressor = new GZIPOutputStream(bos);
+
+                compressor.write(json.getBytes());
+                compressor.close();
+            } catch (final IOException e) {
+                LOG.error("IOException when processing metrics: {}", e.getMessage(), e);
+            }
+
+            final byte[] jsonBytes = bos.toByteArray();
+
+            return doPost(metricFactory.getUrl(), jsonBytes);
         }
 
         return Integer.valueOf(200); // just say it's all good
     }
 
-    private Integer sendMetrics(final List<Metric> metrics) {
-        // convert to JSON and compress
-        final String json = metricFactory.toJsonString(metrics);
-
-        LOG.debug(json);
-
-        // compress the JSON
-        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-
+    protected int doPost(final URL url, final byte[] jsonBytes) {
         try {
-            final GZIPOutputStream compressor = new GZIPOutputStream(bos);
-
-            compressor.write(json.getBytes());
-            compressor.close();
-        } catch (final IOException e) {
-            LOG.error("IOException when processing metrics: {}", e.getMessage(), e);
-        }
-
-        final byte[] jsonBytes = bos.toByteArray();
-
-        try {
-            //final URL url = new URL("http://api.metrink.com");
-            final URL url = metricFactory.getUrl();
             final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
             connection.setRequestMethod("POST");
@@ -131,7 +129,7 @@ class CallableWorker implements Callable<Integer> {
             out.write(jsonBytes);
             out.close();
 
-            final Integer respCode = Integer.valueOf(connection.getResponseCode());
+            final int respCode = connection.getResponseCode();
 
             LOG.debug("Got response code: {}", connection.getResponseCode());
 
@@ -142,7 +140,7 @@ class CallableWorker implements Callable<Integer> {
             LOG.error("IOException while sending metrics: {}", e.getMessage(), e);
         }
 
-        return Integer.valueOf(500); // just call this a 500
+        return 500; // if we get to here, call it an error
     }
 
 }

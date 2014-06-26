@@ -16,6 +16,7 @@
  */
 package com.metrink;
 
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +53,13 @@ public class MetrinkFilter extends MetrinkFilterBase {
     @Override
     public void destroy() {
         executor.shutdownNow();
+    }
+
+    @Override
+    protected CallableWorker createWorker(MetricFactory metricFactory,
+                                          Map<String, Long> serverTime,
+                                          Map<String, Long> pageCount) {
+        return new CallableWorker(metricFactory, serverTime, pageCount);
     }
 
 }
